@@ -252,7 +252,7 @@ def run(
                 # Print results
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
-                    s += f"=================  {n} {names[int(c)]}{'s' * (n > 1)}=="  # add to string
+                    s += f"===={'s' * (n > 1)}===="  # add to string
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -273,8 +273,8 @@ def run(
                                 person_detected_time = time.time()
                                 person_detected = True
                             else:
-                                # 신뢰도가 0.8 이하가 5초 동안 지속이 될 때 >>> 아기가 뒤집혀져 있거나 움직임을 감지함
-                                if time.time() - person_detected_time >= 5:
+                                # 신뢰도가 0.8 이하가 3초 동안 지속이 될 때 >>> 아기가 뒤집혀져 있거나 움직임을 감지함
+                                if time.time() - person_detected_time >= 3:
                                     print("Moving or Back")
                                     person_detected_time = None
                                     person_detected = False  # Reset the status
@@ -335,7 +335,7 @@ def run(
                     vid_writer[i].write(im0)
 
         # Print time (inference-only)
-        LOGGER.info(f"{s}{'  ' if len(det) else 'WARNING:: NO BABY!! '}{dt[1].dt * 1E3:.1f}ms")
+        LOGGER.info(f"{s}{'  ' if len(det) else 'WARNING :: NO BABY!! '}")
 
     # Print results
     t = tuple(x.t / seen * 1e3 for x in dt)  # speeds per image
