@@ -157,6 +157,7 @@ def run(
     is_url = source.lower().startswith(("rtsp://", "rtmp://", "http://", "https://"))
     webcam = source.isnumeric() or source.endswith(".streams") or (is_url and not is_file)
     screenshot = source.lower().startswith("screen")
+    global person_detected_time, person_detected
     if is_url and is_file:
         source = check_file(source)  # download
 
@@ -251,7 +252,7 @@ def run(
                 # Print results
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
-                    s += f"============================================{n} {names[int(c)]}{'s' * (n > 1)}======="  # add to string
+                    s += f"=================  {n} {names[int(c)]}{'s' * (n > 1)}=="  # add to string
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -259,10 +260,35 @@ def run(
                     label = names[c] if hide_conf else f"{names[c]}"
                     confidence = float(conf)
                     confidence_str = f"{confidence:.2f}"
-                    # Only print for 'person' class
-                    if c == 0:  # Assuming 'person' class ID is 0
-                        print(f"Detected: {names[c]}     Confidence: {confidence:.2f}")
+                    
+                    
+                    # 'person'감지됨을 확인하는 클래스
+                    if c == 0:
+                        # person이 감지되었고 신뢰도가 0.8 이하일 때
+                        if confidence <= 0.8:
+                            ### print(f"    Detected: {names[c]}    Confidence: {confidence:.2f}")
 
+                            # If 'person' with high confidence is detected for the first time, start the timer
+                            if not person_detected:
+                                person_detected_time = time.time()
+                                person_detected = True
+                            else:
+                                # 신뢰도가 0.8 이하가 5초 동안 지속이 될 때 >>> 아기가 뒤집혀져 있거나 움직임을 감지함
+                                if time.time() - person_detected_time >= 5:
+                                    print("Moving or Back")
+                                    person_detected_time = None
+                                    person_detected = False  # Reset the status
+                        else:
+                            # person이 감지되었지만 신뢰도가 0.7 이상일 때 >>> 아기가 잘 있어용
+                            ##print(" <<< Success!!  >>> ")
+                            
+                            person_detected_time = None
+                            person_detected = False  # Reset ㄴthe status if confidence is low
+                    else:
+                        # Reset if 'person' is not detected in the current frame
+                        person_detected_time = None
+                        person_detected = False
+                         
                     if save_csv:
                         write_to_csv(p.name, label, confidence_str)
 
