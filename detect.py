@@ -232,7 +232,7 @@ def run(
         # Process predictions
         for i, det in enumerate(pred):  # per image
             seen += 1
-            if webcam:  # batch_size >= 1
+            if webcam:  # batch_size >= 1F
                 p, im0, frame = path[i], im0s[i].copy(), dataset.count
                 s += f"{i}: "
             else:
@@ -256,11 +256,19 @@ def run(
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
+                    x1, y1, x2, y2 = xyxy  # 바운딩 박스 좌표
+
                     c = int(cls)  # integer class
                     label = names[c] if hide_conf else f"{names[c]}"
                     confidence = float(conf)
                     confidence_str = f"{confidence:.2f}"
                     
+                    box_center_x=(x1+x2)/2    # 바운딩 박스의 중심 좌표 계산
+                    image_center_x = im0.shape[1] / 2  # im0의 너비를 기준으로 중앙 계산
+                    
+
+                        
+                    print(f"Bounding Box Center: {box_center_x}, Image Center: {image_center_x}")
                     
                     # 'person'감지됨을 확인하는 클래스
                     if c == 0:
@@ -275,7 +283,11 @@ def run(
                             else:
                                 # 신뢰도가 0.8 이하가 3초 동안 지속이 될 때 >>> 아기가 뒤집혀져 있거나 움직임을 감지함
                                 if time.time() - person_detected_time >= 3:
-                                    print("Moving or Back")
+                                    if box_center_x < image_center_x:
+                                        print("Move Right")
+                                    else:
+                                        print("Move Left")
+                                    print("<<< Moving or Back >>>")
                                     person_detected_time = None
                                     person_detected = False  # Reset the status
                         else:
